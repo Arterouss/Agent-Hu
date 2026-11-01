@@ -2,8 +2,8 @@ name: Claude Pro Invite Link Hunter
 
 on:
   schedule:
-    # Runs every 20 minutes (cron format: minute hour day month day-of-week)
-    - cron: '*/20 * * * *'
+    # Runs every 5 minutes (cron format: minute hour day month day-of-week)
+    - cron: '*/5 * * * *'
   workflow_dispatch: # Allows manual trigger from GitHub web UI
 
 permissions:
@@ -34,7 +34,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          CHECK_INTERVAL_MINUTES: 20
+          CHECK_INTERVAL_MINUTES: 5
         run: |
           python hunter.py
 
@@ -49,4 +49,3 @@ jobs:
             git commit -m "chore: update seen_links.txt [skip ci]"
             git push
           fi
-
