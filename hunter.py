@@ -6,10 +6,13 @@ Core Engine for periodic scraping, regex extraction, deduplication, and Telegram
 
 import argparse
 import datetime
+import json
 import os
 import re
 import sys
+import threading
 import time
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Dict, List, Set, Tuple
 from urllib.parse import urlparse
 
@@ -402,8 +405,71 @@ def run_scan(dry_run: bool = False, validate: bool = False) -> int:
                 dispatched_count += 1
 
     elapsed = time.time() - start_time
+    wib_now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=7)))
+    BOT_STATUS["total_scans"] += 1
+    BOT_STATUS["last_scan_time"] = wib_now.strftime("%Y-%m-%d %H:%M:%S WIB")
+    BOT_STATUS["last_links_found"] = total_scanned
+    BOT_STATUS["total_alerts_sent"] += dispatched_count
     log_message(f"=== Scan Finished in {elapsed:.2f}s. Processed {dispatched_count} new alerts. ===\n")
     return dispatched_count
+
+
+BOT_STATUS = {
+    "status": "online",
+    "bot": "Claude Pro Invite Link Hunter",
+    "total_scans": 0,
+    "last_scan_time": "Never",
+    "last_links_found": 0,
+    "total_alerts_sent": 0,
+    "check_interval_minutes": CHECK_INTERVAL_MINUTES,
+}
+
+
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    """Minimal HTTP handler responding to ping / health-check for Render.com & UptimeRobot."""
+
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        payload = json.dumps(BOT_STATUS, indent=2)
+        self.wfile.write(payload.encode("utf-8"))
+
+    def log_message(self, format, *args):
+        # Silence access logs so hunter.log stays clean
+        pass
+
+
+def start_server_mode(port: int, interval_minutes: int, dry_run: bool, validate: bool):
+    """
+    Start lightweight HTTP health-check server and background hunter loop.
+    Designed for Render.com free tier paired with UptimeRobot.
+    """
+    interval_sec = max(1, interval_minutes) * 60
+    BOT_STATUS["check_interval_minutes"] = interval_minutes
+
+    def hunting_worker():
+        log_message(f"Background Hunter worker started! Scanning every {interval_minutes} minute(s).")
+        time.sleep(3)  # Brief wait so web server binds first
+        while True:
+            try:
+                run_scan(dry_run=dry_run, validate=validate)
+            except Exception as e:
+                log_message(f"[BACKGROUND WORKER ERROR] {e}")
+            time.sleep(interval_sec)
+
+    worker_thread = threading.Thread(target=hunting_worker, daemon=True)
+    worker_thread.start()
+
+    server_address = ("0.0.0.0", port)
+    httpd = HTTPServer(server_address, HealthCheckHandler)
+    log_message(f"Web Health Server running on http://0.0.0.0:{port} (Ready for Render & UptimeRobot)")
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        log_message("Web server stopped by user. Exiting.")
+        httpd.server_close()
+        sys.exit(0)
 
 
 def main():
@@ -431,13 +497,36 @@ def main():
         help="Run continuously in a loop sleeping CHECK_INTERVAL_MINUTES (useful for Windows / local dev)",
     )
     parser.add_argument(
+        "--serve",
+        action="store_true",
+        help="Start HTTP healthcheck web server and background hunting loop (ideal for Render.com)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=int(os.getenv("PORT", "8080")),
+        help="Port for HTTP web server (default: from PORT env or 8080)",
+    )
+    parser.add_argument(
         "--interval",
         type=int,
-        default=CHECK_INTERVAL_MINUTES,
-        help="Interval in minutes when running in --loop mode (default: from .env or 30)",
+        default=int(os.getenv("CHECK_INTERVAL_MINUTES", "2")),
+        help="Interval in minutes when running in loop or server mode (default: from .env or 2)",
     )
 
     args = parser.parse_args()
+
+    # Check if running in Web / Cloud host mode (Render, Koyeb, etc.)
+    env_port = os.getenv("PORT")
+    if args.serve or env_port:
+        port = args.port if args.serve else int(env_port)
+        start_server_mode(
+            port=port,
+            interval_minutes=args.interval,
+            dry_run=args.dry_run,
+            validate=args.validate,
+        )
+        return
 
     if args.test_telegram:
         log_message("Sending test notification to Telegram...")
