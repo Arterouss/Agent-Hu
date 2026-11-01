@@ -1,0 +1,22 @@
+# Environment & secrets
+.env
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs
+hunter.log
+*.log
+
+# Editor & OS files
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
