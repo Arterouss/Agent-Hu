@@ -1,8 +1,8 @@
-name: Claude Pro Invite Link Hunter
+name: Bansos AI Token Hunter
 
 on:
   schedule:
-    # Runs every 5 minutes (cron format: minute hour day month day-of-week)
+    # Runs every 5 minutes (cron format)
     - cron: '*/5 * * * *'
   workflow_dispatch: # Allows manual trigger from GitHub web UI
 
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   hunt:
-    name: Scan & Notify
+    name: Scan Bansos & Notify
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -30,7 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run Hunter Engine
+      - name: Run Bansos Hunter Engine
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -38,14 +38,14 @@ jobs:
         run: |
           python hunter.py
 
-      - name: Commit and push updated seen_links.txt
+      - name: Commit and push updated seen_bansos.txt
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add seen_links.txt
+          git add seen_bansos.txt
           if git diff --staged --quiet; then
-            echo "No new links discovered. Skipping commit."
+            echo "No new bansos items discovered. Skipping commit."
           else
-            git commit -m "chore: update seen_links.txt [skip ci]"
+            git commit -m "chore: update seen_bansos.txt [skip ci]"
             git push
           fi
