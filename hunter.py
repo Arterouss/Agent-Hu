@@ -124,6 +124,30 @@ KNOWN_PROVIDERS = [
     "GLM-4", "MiniMax", "Qwen", "Alibaba Cloud", "NewAPI", "OneAPI", "Perplexity"
 ]
 
+# Official & Standard OpenAI-compatible Base URLs for Instant Copy-Paste
+DEFAULT_PLATFORM_BASE_URLS = {
+    "SiliconFlow": "https://api.siliconflow.cn/v1",
+    "DeepSeek": "https://api.deepseek.com/v1",
+    "OpenRouter": "https://openrouter.ai/api/v1",
+    "Groq": "https://api.groq.com/openai/v1",
+    "Novita AI": "https://api.novita.ai/v3/openai",
+    "Together AI": "https://api.together.xyz/v1",
+    "Cerebras": "https://api.cerebras.ai/v1",
+    "SambaNova": "https://api.sambanova.ai/v1",
+    "Mistral": "https://api.mistral.ai/v1",
+    "Fireworks AI": "https://api.fireworks.ai/inference/v1",
+    "Cloudflare AI": "https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1",
+    "GitHub Models": "https://models.inference.ai.azure.com",
+    "OpenAI": "https://api.openai.com/v1",
+    "Claude": "https://api.anthropic.com/v1",
+    "Anthropic": "https://api.anthropic.com/v1",
+    "Moonshot": "https://api.moonshot.cn/v1",
+    "Kimi": "https://api.moonshot.cn/v1",
+    "Zhipu": "https://open.bigmodel.cn/api/paas/v4",
+    "GLM-4": "https://open.bigmodel.cn/api/paas/v4",
+    "Perplexity": "https://api.perplexity.ai",
+}
+
 # Standard User-Agents
 REDDIT_UA = "linux:bansos-hunter:v2.0 (by /u/dev)"
 BROWSER_UA = (
@@ -275,6 +299,10 @@ def extract_bansos_from_text(title: str, text: str, source: str, link_url: str =
 
     # 5. Detect Platform
     platform = detect_platform(combined)
+
+    # Auto-fill official Base URL if not explicitly found in text
+    if not base_url and platform in DEFAULT_PLATFORM_BASE_URLS:
+        base_url = DEFAULT_PLATFORM_BASE_URLS[platform]
 
     # 6. Extract Duration / Validity (Berapa hari / jam / bulan / permanen)
     duration = extract_duration_from_text(combined)
@@ -476,15 +504,15 @@ def send_telegram_bansos(client: httpx.Client, item: BansosItem) -> bool:
         msg_lines.append(f"⏳ <b>Masa Aktif / Durasi:</b> {item.duration}")
 
     if item.base_url:
-        msg_lines.append(f"🌐 <b>Base URL:</b> <code>{item.base_url}</code>")
+        msg_lines.append(f"\n🌐 <b>Base URL (Tap untuk Salin):</b>\n<code>{item.base_url}</code>")
 
     if item.api_key:
-        msg_lines.append(f"🔑 <b>API Key:</b> <code>{item.api_key}</code>")
+        msg_lines.append(f"\n🔑 <b>API Key (Tap untuk Salin):</b>\n<code>{item.api_key}</code>")
     else:
-        msg_lines.append("🔑 <b>API Key:</b> Klaim via link pendaftaran di bawah")
+        msg_lines.append("\n🔑 <b>API Key:</b> Dapatkan di dashboard akun setelah daftar 1-klik via link klaim di bawah.")
 
     if item.claim_link:
-        msg_lines.append(f"🔗 <b>Link Klaim / Post:</b> <a href=\"{item.claim_link}\">Buka Link Bansos</a>")
+        msg_lines.append(f"\n🔗 <b>Link Klaim / Post:</b> <a href=\"{item.claim_link}\">Buka Link Bansos</a>")
 
     msg_lines.append(f"\n📍 <b>Sumber:</b> {item.source}")
     msg_lines.append(f"⏰ <b>Waktu:</b> {time_str}")

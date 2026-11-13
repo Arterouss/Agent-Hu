@@ -10,8 +10,9 @@ Notifikasi instan langsung dikirim ke HP via **Telegram Bot API**.
 
 - 🔍 **Deteksi Bansos AI Otomatis**:
   - Kuota Token / Credit gratis (e.g. `10 Juta Token`, `10M tokens`, `$5 - $50 Free Credit`).
-  - **Base URL** (OpenAI-compatible endpoint, misal `https://api.siliconflow.cn/v1`, `https://openrouter.ai/api/v1`, relay proxy).
-  - **API Key** (format `sk-...` atau `Bearer ...`).
+  - **Masa Aktif / Durasi Bansos** (e.g. `30 Hari`, `7 Hari`, `24 Jam`, `Permanen`).
+  - **Base URL Otomatis (1-Tap Copy)**: Auto-fill endpoint resmi jika tidak tertulis di postingan.
+  - **API Key Otomatis (1-Tap Copy)**: Key berformat `sk-...` langsung siap disalin dari chat Telegram tanpa buka web!
   - **Link Registrasi Promo / Voucher Klaim**.
 - 🌐 **Web Health Server Terintegrasi (`--serve`)**:
   - Didesain khusus untuk hosting gratis di **Render.com** (tersedia endpoint `/` status live bot).
@@ -23,7 +24,7 @@ Notifikasi instan langsung dikirim ke HP via **Telegram Bot API**.
 
 ---
 
-## 📱 Contoh Format Pesan Notifikasi Telegram
+## 📱 Contoh Format Pesan Notifikasi Telegram (Tinggal Salin 1-Tap)
 
 ```text
 🎁 [BANSOS AI TOKEN DETECTED!] 🎁
@@ -31,8 +32,13 @@ Notifikasi instan langsung dikirim ke HP via **Telegram Bot API**.
 🏷 Platform: SiliconFlow
 💰 Kuota / Benefit: 10 Juta Token Gratis
 ⏳ Masa Aktif / Durasi: 30 Hari (Promo Terbatas)
-🌐 Base URL: https://api.siliconflow.cn/v1
-🔑 API Key: sk-abcdef12345678901234567890abcdef
+
+🌐 Base URL (Tap untuk Salin):
+https://api.siliconflow.cn/v1
+
+🔑 API Key (Tap untuk Salin):
+sk-abcdef1234567890abcdef...
+
 🔗 Link Klaim / Post: https://cloud.siliconflow.cn/i/promo123
 📍 Sumber: Telegram @freeaipromos
 ⏰ Waktu: 2026-11-13 12:00:00 WIB
