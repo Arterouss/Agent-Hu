@@ -30,6 +30,7 @@ Notifikasi instan langsung dikirim ke HP via **Telegram Bot API**.
 
 🏷 Platform: SiliconFlow
 💰 Kuota / Benefit: 10 Juta Token Gratis
+⏳ Masa Aktif / Durasi: 30 Hari (Promo Terbatas)
 🌐 Base URL: https://api.siliconflow.cn/v1
 🔑 API Key: sk-abcdef12345678901234567890abcdef
 🔗 Link Klaim / Post: https://cloud.siliconflow.cn/i/promo123

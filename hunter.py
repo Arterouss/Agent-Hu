@@ -76,6 +76,38 @@ QUOTA_REGEX = re.compile(
     re.IGNORECASE,
 )
 
+DURATION_PATTERNS = [
+    re.compile(r"(\d+[\s-]*(?:hari|jam|bulan|minggu|days?|hours?|months?|weeks?|hrs?))\s*(?:trial|free|validity|masa aktif|berlaku)?", re.IGNORECASE),
+    re.compile(r"(?:valid\s*(?:for|until)?|aktif|durasi|masa\s*aktif|expired|expires\s*(?:in)?|berlaku|trial\s*(?:of)?)\s*[:=]?\s*(\d+\s*(?:hari|jam|bulan|minggu|days?|hours?|months?|weeks?|d|h))", re.IGNORECASE),
+    re.compile(r"\b(permanent|no\s*expiry|selamanya|unlimited\s*time)\b", re.IGNORECASE),
+]
+
+
+def format_duration(val: Optional[str]) -> str:
+    if not val:
+        return "Selama Kuota Masih Ada (Siapa Cepat Dia Dapat)"
+    val_lower = val.lower().strip()
+    if any(k in val_lower for k in ["perm", "selamanya", "no expiry", "unlimited"]):
+        return "Permanen (Tanpa Expired)"
+    val_norm = re.sub(r"[\s-]*days?", " Hari", val, flags=re.I)
+    val_norm = re.sub(r"[\s-]*hari", " Hari", val_norm, flags=re.I)
+    val_norm = re.sub(r"[\s-]*hours?|hrs?", " Jam", val_norm, flags=re.I)
+    val_norm = re.sub(r"[\s-]*jam", " Jam", val_norm, flags=re.I)
+    val_norm = re.sub(r"[\s-]*months?", " Bulan", val_norm, flags=re.I)
+    val_norm = re.sub(r"[\s-]*bulan", " Bulan", val_norm, flags=re.I)
+    val_norm = re.sub(r"[\s-]*weeks?", " Minggu", val_norm, flags=re.I)
+    val_norm = re.sub(r"[\s-]*minggu", " Minggu", val_norm, flags=re.I)
+    return val_norm.strip()
+
+
+def extract_duration_from_text(text: str) -> str:
+    for pat in DURATION_PATTERNS:
+        m = pat.search(text)
+        if m:
+            return format_duration(m.group(1))
+    return "Selama Kuota Masih Ada (Siapa Cepat Dia Dapat)"
+
+
 # Trigger Keywords (To ensure the post is actually about free AI credits / bansos / tokens)
 BANSOS_KEYWORDS = [
     "bansos", "free token", "free tokens", "10m token", "10 juta", "free api",
@@ -122,6 +154,7 @@ class BansosItem:
     base_url: Optional[str] = None
     api_key: Optional[str] = None
     quota: Optional[str] = None
+    duration: Optional[str] = None
     claim_link: Optional[str] = None
     unique_id: str = ""
 
@@ -243,6 +276,9 @@ def extract_bansos_from_text(title: str, text: str, source: str, link_url: str =
     # 5. Detect Platform
     platform = detect_platform(combined)
 
+    # 6. Extract Duration / Validity (Berapa hari / jam / bulan / permanen)
+    duration = extract_duration_from_text(combined)
+
     # Strict Validation: Must be genuine Bansos / Free Token / API Key
     is_real_bansos = False
     if api_key:
@@ -273,6 +309,7 @@ def extract_bansos_from_text(title: str, text: str, source: str, link_url: str =
         base_url=base_url,
         api_key=api_key,
         quota=quota,
+        duration=duration,
         claim_link=claim_link,
         unique_id=uid,
     )
@@ -434,6 +471,9 @@ def send_telegram_bansos(client: httpx.Client, item: BansosItem) -> bool:
 
     if item.quota:
         msg_lines.append(f"💰 <b>Kuota / Benefit:</b> {item.quota}")
+
+    if item.duration:
+        msg_lines.append(f"⏳ <b>Masa Aktif / Durasi:</b> {item.duration}")
 
     if item.base_url:
         msg_lines.append(f"🌐 <b>Base URL:</b> <code>{item.base_url}</code>")
@@ -647,6 +687,7 @@ def main():
                 base_url="https://api.siliconflow.cn/v1",
                 api_key="sk-sample1234567890abcdef1234567890abcdef",
                 quota="10 Juta Token Gratis",
+                duration="30 Hari (Promo Terbatas)",
                 claim_link="https://cloud.siliconflow.cn/i/sample-claim-link",
                 unique_id="test-bansos-uid",
             )
